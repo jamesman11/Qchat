@@ -1,0 +1,138 @@
+html, body { margin: 0; padding: 0; }
+body{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+  font-family: 'Quicksand', sans-serif;
+}
+.inline{
+  display: inline;
+}
+.users{
+	float : right;
+	margin-right: 1.5em;
+}
+.messages {
+	width: 400px;
+	margin: 1em;
+	border : 1px solid black;
+	padding: 1em;
+}
+.message_form,
+.change_name_form{
+	padding: 1em;
+}
+
+#chat-window{
+  display: none;
+}
+#login-window{
+  width: 305px;
+  height: 200px;
+  position: fixed;
+  /* background-color: #00FF00; */
+  top: 50%;
+  left: 50%;
+  margin-top: -100px;
+  margin-left: -150px;
+  line-height: 23px;
+
+}
+#login-window i{
+  color: #868686;
+  margin-right: 10px;
+}
+#login-window .greeting{
+  position: relative;
+  top: 0px;
+  animation: greeting 1s linear;
+}
+#login-window .input{
+  position: relative;
+  top: 0px;
+  animation: input 1s linear;
+}
+@keyframes greeting {
+  from {
+    top: 20px;
+    opacity: 0.5;
+  }
+  to {
+    top: 0px;
+    opacity: 1;
+  }
+}
+@keyframes input {
+  from {
+    top: 10px;
+    opacity: 0;
+  }
+  to {
+    top: 0px;
+    opacity: 1;
+  }
+}
+@keyframes input_width {
+  from {
+    width: 0px;
+  }
+  to {
+    width: 165px;
+  }
+}
+input{
+  position: relative;
+  padding: 0;
+  background: 0 0;
+  border: none;
+  border-bottom: 1px solid #4FB5EA;
+  font-family: 'Quicksand', sans-serif;
+  letter-spacing: 1px;
+  outline: 0;
+  font-size: 14px;
+  animation: input_width 2s linear;
+}
+
+.introForm .input{
+  display: inline;
+}
+.introForm button{
+  position: relative;
+  display: inline-block;
+  background: 0 0;
+  border: none;
+  color: #4FB5EA;
+  font-family: LetteraProLight,monospace;
+  text-transform: uppercase;
+  letter-spacing: 1.7px;
+  outline: 0;
+  cursor: pointer;
+  padding: 0 16px;
+  margin: 0 24px 0 4px;
+}
+.introForm button:hover:before{
+    -webkit-transform: translateX(-5px) translateZ(0);
+    transform: translateX(-5px) translateZ(0);
+}
+.introForm button:hover:after{
+  -webkit-transform: translateX(5px) translateZ(0);
+  transform: translateX(5px) translateZ(0);
+}
+.introForm button:before{
+  content: '[';
+  position: absolute;
+  top: 0;
+  left: 6px;
+  transition: -webkit-transform .2s ease-out;
+  transition: transform .2s ease-out;
+}
+
+.introForm button:after{
+  content: ']';
+  position: absolute;
+  top: 0;
+  right: 6px;
+  transition: -webkit-transform .2s ease-out;
+  transition: transform .2s ease-out;
+}
