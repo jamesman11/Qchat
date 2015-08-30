@@ -1,15 +1,17 @@
-/**
- * @jsx React.DOM
- */
 var socket = io.connect();
-
-var Users = [];
-var Messages = [];
-
+var ENTER_KEY_CODE = 13;
+var actions = require('./actions');
+var Store = require('./store');
+var dispatcher = require('./dispatcher');
+var helperUtil = require('./helperUtil');
+var actionTypes = helperUtil.ActionTypes;
+var avatars = helperUtil.Avatars;
+var AVATAR_SCROLL_LIMIT = 3;
+var SCROLL_GAP_WIDTH = 171;
 var UsersList = React.createClass({
 	render: function(){
 		var renderUser = function(user){
-			return <li> { user} </li>
+			return <li> { user } </li>
 		};
 		return (
 			<div class='users'>
@@ -105,28 +107,17 @@ var ChangeNameForm = React.createClass({
 	}
 });
 
-var ChatApp = React.createClass({
-
+var ChatWindow = React.createClass({
 	getInitialState: function(){
-
-		socket.on('init', this.initialize);
 		socket.on('send:message', this.messageRecieve);
 		socket.on('user:join', this.userJoined);
 		socket.on('user:left', this.userLeft);
-		socket.on('change:name', this.userChangedName);
-
 		return {users: [], messages:[], text: ''};
 	},
-
-	initialize: function(data){
-		this.setState({ users: data.users, user: data.name});
-	},
-
 	messageRecieve: function(message){
 		this.state.messages.push(message);
 		this.setState();
 	},
-
 	userJoined: function(data){
 		this.state.users.push(data.name);
 		this.state.messages.push({
@@ -142,18 +133,6 @@ var ChatApp = React.createClass({
 		this.state.messages.push({
 			user: 'APLICATION BOT',
 			text : data.name +' Left'
-		});
-		this.setState();
-
-	},
-
-	userChangedName : function(data){
-		var oldName = data.oldName;
-		var newName = data.newName;
-		this.state.users.splice(this.state.users.indexOf(oldName), 1, newName);
-		this.state.messages.push({
-			user: 'APLICATION BOT',
-			text : 'Change Name : ' + oldName + ' ==> '+ newName
 		});
 		this.setState();
 
@@ -181,8 +160,9 @@ var ChatApp = React.createClass({
 	},
 
 	render : function(){
+		var style = this.props.isLogin ? { display: 'none'} : { display: 'inline-block'}
 		return (
-			<div>
+			<div id={'chat-window'} style={style}>
 				<UsersList users={this.state.users} />
 				<MessageList messages={this.state.messages} />
 				<MessageForm onMessageSubmit={this.handleMessageSubmit} user={this.state.user} />
@@ -192,40 +172,136 @@ var ChatApp = React.createClass({
 	}
 });
 var LoginForm = React.createClass({
+	avatar_index : 1,
 	getInitialState: function(){
-    return {style: {
-			opacity: '0'
-		}}
-  },
+		return {
+			btnDisplay: 'none',
+			name : "",
+			isNextStep : false
+		}
+  	},
 	componentDidMount: function() {
 		 React.findDOMNode(this.refs.login_input).focus();
  	},
-	handleChange : function(){
-    this.setState({
-      style: {
-				opcacity: '1'
-			}
-    });
+	handleKeydown: function(event) {
+		if(event.keyCode === ENTER_KEY_CODE){
+			this.setState({isNextStep: true});
+		}
+  	},
+	handleClick: function(){
+		this.props.isLogin = false;
+		event.preventDefault();
+		var name = this.state.name.trim();
+		if (name) {
+			//dispatcher.dispatch({
+			//	type: actionTypes.LOGIN,
+			//	username: name
+			//});
+			socket.emit('login', {name: name});
+		}
 	},
-  render : function(){
-    return (
-      <div className={'introForm'}>
-        <div>
-          <div className={'greeting'}>
+	handleChange: function(event){
+		var text = event.target.value;
+		this.setState({
+			name : text
+		});
+	},
+	avatarNavLeft: function(){
+		if(this.avatar_index < AVATAR_SCROLL_LIMIT){
+			$(React.findDOMNode(this.refs.avatarNav)).animate({'right':'+=' + SCROLL_GAP_WIDTH + 'px'});
+			this.avatar_index++;
+		}
+	},
+	avatarNavRight: function(){
+		if(this.avatar_index > 1){
+			$(React.findDOMNode(this.refs.avatarNav)).animate({'right':'-=' + SCROLL_GAP_WIDTH + 'px'});
+			this.avatar_index--;
+		}
+	},
+	// maybe not a react way, will find a good way to do this
+	selectAvatar: function(event){
+		var id = $(event.currentTarget).attr('data-id');
+		_.each($(this.refs.avatarNav.getDOMNode()).children(), function(child){
+			child.className = child.getAttribute('data-id') === id ? "avatar active" : "avatar";
+		});
+		this.setState({
+			btnDisplay: 'block',
+			avatar: id
+		});
+	},
+  	render : function(){
+	  	var style = this.props.isLogin ? { display: 'inline-block'} : { display: 'none'};
+	  	var cx = React.addons.classSet;
+	  	var introClasses = cx({
+		  'introForm': true,
+		  'fade': this.state.isNextStep
+	  	});
+	  	var avatarClasses = cx({
+		  'avatarForm' : true,
+		  'active': this.state.isNextStep
+	  	});
+		return (
+			<div id={'login-window'} style={style}>
+				<div className={introClasses}>
+					<div className={'greeting'}>
 						<i className={"fa fa-commenting-o"}></i>
-            <div className={"inline"}>What’s your name?</div>
-          </div>
-          <div className={'input'}>
+						<div className={"inline"}>{'Hi, what’s your name?'}</div>
+					</div>
+					<div className={'input'}>
 						<i className={"fa fa-commenting-o"}></i>
-            <div className={'input'}>
-              <input className={"inline"} type="text" ref="login_input" onChange={this.handleChange}/>
-            </div>
-            <button type="button" style={this.state.style}><span>Submit</span></button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+						<div className={'input'}>
+							<input className={"inline"} type="text" value={this.state.name} ref="login_input" disabled={this.state.isNextStep} onChange={this.handleChange} onKeyDown={this.handleKeydown}/>
+						</div>
+					</div>
+				</div>
+				<div className={avatarClasses} ref="avatar">
+					<div>
+						<i className={"fa fa-commenting-o"}></i>
+						<div className={"inline"}>{'Pick your favorite avatar.'}</div>
+					</div>
+					<div className="avatar-selector">
+						<i className={"nav fa fa-angle-left fa-lg"} onClick={this.avatarNavLeft}></i>
+						<div className={'avatar-container-outer'}>
+							<div className={'avatar-container-inner'} ref="avatarNav">
+								{_.values(avatars).map(function(avatar) {
+									var style = {
+										'background-position': avatar.background_position
+									}
+									return <div key={avatar.avatar_id} data-id = {avatar.avatar_id} className={'avatar'} onClick={this.selectAvatar} style={style}></div>;
+								}.bind(this))}
+							</div>
+						</div>
+						<i className={"nav fa fa-angle-right fa-lg"} onClick={this.avatarNavRight}></i>
+					</div>
+				</div>
+				<button className={'login-btn'} type="button" style={{display: this.state.btnDisplay}} onClick={this.handleClick}>
+					<span>Start chatting!</span>
+				</button>
+			</div>
+			);
+  	}
+});
+var ChatApp = React.createClass({
+	getInitialState: function() {
+    return {isLogin: true};
+  	},
+	componentDidMount: function() {
+		Store.addLoginListener(this._onLogin);
+	},
+
+	componentWillUnmount: function() {
+		Store.removeLoginListener(this._onLogin);
+	},
+	render : function(){
+		return (
+			<div className={'main'}>
+				<ChatWindow isLogin={this.state.isLogin}/>
+				<LoginForm isLogin={this.state.isLogin}/>
+			</div>
+		);
+	},
+	_onLogin: function() {
+		this.setState({isLogin: false});
+	}
 })
-React.render(<ChatApp/>, $('#chat-window')[0]);
-React.render(<LoginForm/>, $('#login-window')[0]);
+React.render(<ChatApp/>, $('body')[0]);

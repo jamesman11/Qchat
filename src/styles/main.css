@@ -4,54 +4,8 @@ body{
   width: 100%;
   height: 100%;
   background-color: #f5f5f5;
-  font-family: 'Quicksand', sans-serif;
-}
-.inline{
-  display: inline;
-}
-.users{
-	float : right;
-	margin-right: 1.5em;
-}
-.messages {
-	width: 400px;
-	margin: 1em;
-	border : 1px solid black;
-	padding: 1em;
-}
-.message_form,
-.change_name_form{
-	padding: 1em;
-}
-
-#chat-window{
-  display: none;
-}
-#login-window{
-  width: 305px;
-  height: 200px;
-  position: fixed;
-  /* background-color: #00FF00; */
-  top: 50%;
-  left: 50%;
-  margin-top: -100px;
-  margin-left: -150px;
-  line-height: 23px;
-
-}
-#login-window i{
-  color: #868686;
-  margin-right: 10px;
-}
-#login-window .greeting{
-  position: relative;
-  top: 0px;
-  animation: greeting 1s linear;
-}
-#login-window .input{
-  position: relative;
-  top: 0px;
-  animation: input 1s linear;
+  font-family: 'Open Sans Condensed', sans-serif;
+  /*font-family: 'Quicksand', sans-serif;*/
 }
 @keyframes greeting {
   from {
@@ -78,8 +32,65 @@ body{
     width: 0px;
   }
   to {
-    width: 165px;
+    width: 111px;
   }
+}
+@keyframes avatar {
+  from {
+    bottom: -10px;
+    opacity: 0;
+  }
+  to {
+    bottom: 0px;
+    opacity: 1;
+  }
+}
+.inline{
+  display: inline;
+}
+.users{
+	float : right;
+	margin-right: 1.5em;
+}
+.messages {
+	width: 400px;
+	margin: 1em;
+	border : 1px solid black;
+	padding: 1em;
+}
+.message_form,
+.change_name_form{
+	padding: 1em;
+}
+#login-window{
+  position: fixed;
+  /* background-color: #00FF00; */
+  top: 47%;
+  left: 50%;
+  margin-top: -100px;
+  margin-left: -150px;
+  line-height: 23px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+  border-radius: 2px;
+  padding: 20px;
+  min-width: 178px;
+  min-height: 86px;
+}
+
+.fa-commenting-o{
+  color: #868686;
+  margin-right: 10px;
+}
+#login-window .greeting{
+  position: relative;
+  top: 0px;
+  animation: greeting 1s linear;
+}
+#login-window .input{
+  position: relative;
+  top: 0px;
+  animation: input 1s linear;
 }
 input{
   position: relative;
@@ -87,17 +98,22 @@ input{
   background: 0 0;
   border: none;
   border-bottom: 1px solid #4FB5EA;
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Open Sans Condensed', sans-serif;
+  /*font-family: 'Quicksand', sans-serif;*/
   letter-spacing: 1px;
   outline: 0;
-  font-size: 14px;
+  font-size: 15px;
   animation: input_width 2s linear;
+  font-weight: 300;
 }
 
 .introForm .input{
   display: inline;
 }
-.introForm button{
+.introForm.fade{
+  opacity: 0.3;
+}
+.login-btn{
   position: relative;
   display: inline-block;
   background: 0 0;
@@ -111,15 +127,15 @@ input{
   padding: 0 16px;
   margin: 0 24px 0 4px;
 }
-.introForm button:hover:before{
+.login-btn:hover:before{
     -webkit-transform: translateX(-5px) translateZ(0);
     transform: translateX(-5px) translateZ(0);
 }
-.introForm button:hover:after{
+.login-btn:hover:after{
   -webkit-transform: translateX(5px) translateZ(0);
   transform: translateX(5px) translateZ(0);
 }
-.introForm button:before{
+.login-btn:before{
   content: '[';
   position: absolute;
   top: 0;
@@ -128,11 +144,87 @@ input{
   transition: transform .2s ease-out;
 }
 
-.introForm button:after{
+.login-btn:after{
   content: ']';
   position: absolute;
   top: 0;
   right: 6px;
   transition: -webkit-transform .2s ease-out;
   transition: transform .2s ease-out;
+}
+
+.login-btn span{
+  position: relative;
+  top: 1px;
+}
+.avatarForm{
+  display: none;
+  position: relative;
+  margin-top: 5px;
+}
+.avatarForm.active{
+  display: block;
+  animation: avatar 0.5s linear;
+}
+.avatarForm .avatar-container-outer{
+  width: 171px;
+  height: 58px;
+  overflow: hidden;
+  display: inline-block;
+}
+.avatarForm .avatar-container-inner{
+  width: 522px;
+  height: 58px;
+  right: 0px;
+  position: relative;
+}
+.avatarForm .avatar{
+  background-image: url('../content/avatars.jpg');
+  width: 57px;
+  height: 57px;
+  border-radius: 29px;
+  position: relative;
+  float: left;
+  cursor: pointer;
+  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+  -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+  box-sizing: border-box;         /* Opera/IE 8+ */
+}
+.avatarForm .avatar.active{
+  border: 1px solid #4FB5EA;
+}
+.avatarForm .avatar:hover{
+  opacity: 0.5;
+}
+.avatarForm .avatar-selector{
+  margin-top: 7px;
+}
+.avatarForm i.nav{
+  position: relative;
+  bottom: 22px;
+  cursor: pointer;
+  color: #868686;
+}
+.avatarForm i.nav:hover{
+  color: #4FB5EA;
+  -ms-transform: scale(1.2,1.2); /* IE 9 */
+  -webkit-transform: scale(1.2,1.2); /* Safari */
+  transform: scale(1.2,1.2); /* Standard syntax */
+}
+.avatarForm .fa-angle-left{
+  margin-right: 5px;
+}
+.avatarForm .fa-angle-right{
+  margin-left: 5px;
+}
+
+.avatarForm.switch-enter{
+  -ms-transform: scale(1.2,1.2); /* IE 9 */
+  -webkit-transform: scale(1.2,1.2); /* Safari */
+  transform: scale(1.2,1.2); /* Standard syntax */
+}
+.avatarForm.switch-enter.switch-enter-active {
+  -ms-transform: scale(2,2); /* IE 9 */
+  -webkit-transform: scale(2,2); /* Safari */
+  transform: scale(2,2); /* Standard syntax */
 }

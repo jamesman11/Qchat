@@ -2,14 +2,30 @@
     "name": "wechat",
     "description": "a realtime chat web application",
     "version": "0.4.0",
-    "main": "server.js",
+    "main": "src/scripts/wechat.js",
     "dependencies": {
         "body-parser": "^1.4.3",
         "express": "3.4.x",
-        "socket.io": "0.9.x"
+        "socket.io": "0.9.x",
+        "keymirror": "~0.1.0",
+        "flux": "^2.0.0",
+        "browserify": "^6.2.0",
+        "envify": "^3.0.0",
+        "reactify": "^0.15.2",
+        "watchify": "^2.1.1",
+        "object-assign": "^1.0.0"
+    },
+    "scripts": {
+        "start": "watchify -o src/scripts/bundle.js -v -d src/scripts/wechat.js | node server.js"
     },
     "engines": {
         "node": "0.10.x",
         "npm": "1.2.x"
+    },
+    "browserify": {
+        "transform": [
+            "reactify",
+            "envify"
+        ]
     }
 }

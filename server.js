@@ -23,33 +23,17 @@ app.post('/comments.json', function(req, res) {
     });
   });
 });
-
+app.post('/login', function(req, res){
+  console.log(req);
+});
+app.get('/login', function (req, res) {
+  console.log(req);
+  console.log(res);
+});
 server.listen(process.env.PORT || 3000);
 // Keep track of which names are used so that there are no duplicates
 var userNames = (function () {
   var names = {};
-
-  var claim = function (name) {
-    if (!name || names[name]) {
-      return false;
-    } else {
-      names[name] = true;
-      return true;
-    }
-  };
-
-  // find the lowest unused "guest" name and claim it
-  var getGuestName = function () {
-    var name,
-      nextUserId = 1;
-
-    do {
-      name = 'Guest ' + nextUserId;
-      nextUserId += 1;
-    } while (!claim(name));
-
-    return name;
-  };
 
   // serialize claimed names as an array
   var get = function () {
@@ -68,26 +52,11 @@ var userNames = (function () {
   };
 
   return {
-    claim: claim,
     free: free,
-    get: get,
-    getGuestName: getGuestName
+    get: get
   };
 }());
 io.sockets.on('connection', function(socket){
-  var name = userNames.getGuestName();
-
-  // send the new user their name and a list of users
-  socket.emit('init', {
-    name: name,
-    users: userNames.get()
-  });
-
-  // notify other clients that a new user has joined
-  socket.broadcast.emit('user:join', {
-    name: name
-  });
-
   // broadcast a user's message to other users
   socket.on('send:message', function (data) {
     socket.broadcast.emit('send:message', {
@@ -95,26 +64,9 @@ io.sockets.on('connection', function(socket){
       text: data.text
     });
   });
-
-  // validate a user's name change, and broadcast it on success
-  socket.on('change:name', function (data, fn) {
-    if (userNames.claim(data.name)) {
-      var oldName = name;
-      userNames.free(oldName);
-
-      name = data.name;
-
-      socket.broadcast.emit('change:name', {
-        oldName: oldName,
-        newName: name
-      });
-
-      fn(true);
-    } else {
-      fn(false);
-    }
-  });
-
+  socket.on('login', function(data){
+    console.log(data);
+  })
   // clean up when a user leaves, and broadcast it to other users
   socket.on('disconnect', function () {
     socket.broadcast.emit('user:left', {
