@@ -7,23 +7,23 @@ var express = require('express'),
     _ = require('underscore')._;
 //specify the html we will use
 app.use('/', express.static(__dirname + '/src'));
-app.get('/comments.json', function(req, res) {
-  fs.readFile('comments.json', function(err, data) {
-    res.setHeader('Cache-Control', 'no-cache');
-    res.json(JSON.parse(data));
-  });
-});
-
-app.post('/comments.json', function(req, res) {
-  fs.readFile('comments.json', function(err, data) {
-    var comments = JSON.parse(data);
-    comments.push(req.body);
-    fs.writeFile('comments.json', JSON.stringify(comments, null, 4), function(err) {
-      res.setHeader('Cache-Control', 'no-cache');
-      res.json(comments);
-    });
-  });
-});
+//app.get('/comments.json', function(req, res) {
+//  fs.readFile('comments.json', function(err, data) {
+//    res.setHeader('Cache-Control', 'no-cache');
+//    res.json(JSON.parse(data));
+//  });
+//});
+//
+//app.post('/comments.json', function(req, res) {
+//  fs.readFile('comments.json', function(err, data) {
+//    var comments = JSON.parse(data);
+//    comments.push(req.body);
+//    fs.writeFile('comments.json', JSON.stringify(comments, null, 4), function(err) {
+//      res.setHeader('Cache-Control', 'no-cache');
+//      res.json(comments);
+//    });
+//  });
+//});
 app.get('/users', function(req, res){
   res.setHeader('Cache-Control', 'no-cache');
   res.json(userNames.get_all());
@@ -50,6 +50,7 @@ var userNames = (function () {
     data.id = nextUserId;
     users[name] = data;
     nextUserId++;
+    return data;
   };
   return {
     free: free,
@@ -60,21 +61,16 @@ var userNames = (function () {
 }());
 io.sockets.on('connection', function(socket){
   socket.on('send:message', function (data) {
-    socket.broadcast.emit('send:message', {
-      user: data.user,
-      message: data.message
-    });
+    socket.broadcast.emit('send:message', data);
   });
   socket.on('login', function(data, callback){
     var name = data.name;
     if(userNames.contain(name)){
       callback(false);
     }else{
-      userNames.add(data);
+      var new_user = userNames.add(data);
       callback(true);
-      socket.broadcast.emit('user:join', {
-        name: name
-      });
+      socket.broadcast.emit('user:join', new_user);
     }
   });
 });

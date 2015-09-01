@@ -30,12 +30,29 @@ var UserList = React.createClass({
 })
 var Message = React.createClass({
 	render: function(){
-		return(
-			<div className={"message"}>
-				<strong>{this.props.user.name}</strong> :
-				{this.props.message}
-			</div>
-		)
+		if(this.props.type === "automate"){
+			var output = (
+				<div className={"message automate"}>
+					<div className='automate-message'>{this.props.message}</div>
+				</div>
+			)
+		}else{
+			var user = this.props.user;
+			var style = { 'backgroundPosition': avatars_small[user.avatar].background_position };
+			var output = (
+				<div className={"message"}>
+					<div className='user-avatar' style={style}></div>
+					<div className='user-name'> { user.name } <span className={'time'}>send at {this.props.time}</span></div>
+					<div className='content'>
+						<i className='fa fa-play'></i>
+						{this.props.message}
+					</div>
+				</div>
+			)
+		}
+
+		return output;
+
 	}
 });
 
@@ -51,9 +68,13 @@ var MessageList = React.createClass({
 	send: function(){
 		var data = {
 			message : this.state.message,
-			user : Store.current_user()
+			user : Store.current_user(),
+			time : moment(new Date()).format('lll')
 		}
 		this.props.handleMessageSubmit(data);
+		this.setState({
+			message : ""
+		});
 	},
 	handleKeydown: function(){
 		if(event.keyCode === ENTER_KEY_CODE){
@@ -61,16 +82,18 @@ var MessageList = React.createClass({
 		}
 	},
 	handleChange: function(event){
-		this.setState({
-			message : event.target.value
-		});
+		if(event.keyCode !== ENTER_KEY_CODE){
+			this.setState({
+				message : event.target.value
+			});
+		}
 	},
 	render: function(){
 		var is_messages_empty = _.isEmpty(this.props.messages);
 		var no_message_style = is_messages_empty ? { display : 'block'} : { display : 'none'};
 		var message_style = is_messages_empty ? { display : 'none'} : { display : 'block'};
 		var renderMessage = function(message){
-			return <Message user={message.user} message={message.message} />
+			return <Message user={message.user} message={message.message} time={message.time} type={message.type}/>
 		}
 		return (
 			<div className='message-board'>
@@ -79,12 +102,12 @@ var MessageList = React.createClass({
 					<div className="no-message" style={no_message_style}>
 						No new messages:)
 					</div>
-					<div className="has-message" style={message_style}>
+					<div className="has-message" style={message_style} ref="all_messages">
 						{ this.props.messages.map(renderMessage)}
 					</div>
 				</div>
 				<div className='messages-composer'>
-					<textarea value={this.state.name} onChange={this.handleChange} onKeyDown={this.handleKeydown} ref='textarea'/>
+					<textarea value={this.state.message} onChange={this.handleChange} onKeyDown={this.handleKeydown} ref='textarea'/>
 					<div className='send-btn'>
 						<button className='btn' type="button" onClick={this.send}>
 							<span>Send</span>
@@ -111,10 +134,10 @@ var ChatWindow = React.createClass({
 		this.state.messages.push(data);
 	},
 	userJoined: function(data){
-		this.state.users.push(data.name);
+		this.state.users.push(data);
 		this.state.messages.push({
-			user: 'APPLICATION BOT',
-			message : data.user.name +' just joined'
+			message : data.name +' just joined, say hello!',
+			type : 'automate'
 		});
 	},
 	handleMessageSubmit : function(data){
@@ -163,7 +186,7 @@ var LoginForm = React.createClass({
 					dispatcher.dispatch({
 						type: actionTypes.LOGIN,
 						name: name,
-						avartar: avatar
+						avatar: avatar
 					});
 					React.render(<ChatWindow/>, $('body')[0]);
 				}

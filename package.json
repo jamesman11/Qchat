@@ -13,7 +13,9 @@
         "envify": "^3.0.0",
         "reactify": "^0.15.2",
         "watchify": "^2.1.1",
-        "object-assign": "^1.0.0"
+        "object-assign": "^1.0.0",
+        "underscore" : "^1.8.3",
+        "moment": "^2.10.6"
     },
     "scripts": {
         "start": "watchify -o src/scripts/bundle.js -v -d src/scripts/wechat.js | node server.js"
