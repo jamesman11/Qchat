@@ -48,20 +48,6 @@ body{
 .inline{
   display: inline;
 }
-.users{
-	float : right;
-	margin-right: 1.5em;
-}
-.messages {
-	width: 400px;
-	margin: 1em;
-	border : 1px solid black;
-	padding: 1em;
-}
-.message_form,
-.change_name_form{
-	padding: 1em;
-}
 #login-window{
   position: fixed;
   /* background-color: #00FF00; */
@@ -113,7 +99,7 @@ input{
 .introForm.fade{
   opacity: 0.3;
 }
-.login-btn{
+.btn{
   position: relative;
   display: inline-block;
   background: 0 0;
@@ -127,15 +113,15 @@ input{
   padding: 0 16px;
   margin: 0 24px 0 4px;
 }
-.login-btn:hover:before{
+.btn:hover:before{
     -webkit-transform: translateX(-5px) translateZ(0);
     transform: translateX(-5px) translateZ(0);
 }
-.login-btn:hover:after{
+.btn:hover:after{
   -webkit-transform: translateX(5px) translateZ(0);
   transform: translateX(5px) translateZ(0);
 }
-.login-btn:before{
+.btn:before{
   content: '[';
   position: absolute;
   top: 0;
@@ -144,7 +130,7 @@ input{
   transition: transform .2s ease-out;
 }
 
-.login-btn:after{
+.btn:after{
   content: ']';
   position: absolute;
   top: 0;
@@ -153,7 +139,7 @@ input{
   transition: transform .2s ease-out;
 }
 
-.login-btn span{
+.btn span{
   position: relative;
   top: 1px;
 }
@@ -227,4 +213,95 @@ input{
   -ms-transform: scale(2,2); /* IE 9 */
   -webkit-transform: scale(2,2); /* Safari */
   transform: scale(2,2); /* Standard syntax */
+}
+#chat-window{
+  margin: 0 auto;
+  width: 535px;
+  height: 470px;
+  margin-top: 30px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+  border-radius: 2px;
+  padding: 10px 20px;
+}
+
+#chat-window .users{
+  float: left;
+  width: 140px;
+  height: 430px;
+}
+
+#chat-window .user-profile{
+  line-height: 30px;
+  height: 32px;
+  padding: 3px 0px;
+}
+#chat-window .message-container{
+  width: 345px;
+  height: 100%;
+  margin-left: 10px;
+  float: left;
+}
+#chat-window .messages{
+  width: 100%;
+  height: 290px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+#chat-window .messages .no-message{
+  line-height: 290px;
+  text-align: center;
+  color: #6B6B6B;
+}
+#chat-window .messages-composer{
+  width: 329px;
+  height: 105px;
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 0;
+}
+#chat-window .messages-composer textarea{
+  font-family: 'Open Sans Condensed', sans-serif;
+  border: none;
+  overflow: auto;
+  outline: none;
+  resize: none;
+  width: 323px;
+  height: 80px;
+  font-size: 14px;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  background-color: #f5f5f5;
+  line-height: 20px;
+}
+#chat-window .messages-composer .btn{
+  float: right;
+  margin: 0;
+}
+#chat-window .users-list{
+  height: 408px;
+  overflow: auto;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 2px 5px;
+  border-radius: 2px;
+}
+#chat-window .user-profile .user-name{
+  position: relative;
+  left: 3px;
+  top: 2px;
+}
+#chat-window .user-profile .user-name span{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 90px;
+  position: absolute;
+}
+#chat-window .user-avatar{
+  background-image: url('../content/avatars_small.jpg');
+  width: 35px;
+  height: 35px;
+  border-radius: 17px;
+  position: relative;
+  float: left;
 }

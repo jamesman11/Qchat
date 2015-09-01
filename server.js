@@ -3,7 +3,8 @@ var express = require('express'),
     server = require('http').createServer(app),
     io = require('socket.io').listen(server),
     fs = require('fs'),
-    users = [];
+    users = [],
+    _ = require('underscore')._;
 //specify the html we will use
 app.use('/', express.static(__dirname + '/src'));
 app.get('/comments.json', function(req, res) {
@@ -23,26 +24,20 @@ app.post('/comments.json', function(req, res) {
     });
   });
 });
-app.post('/login', function(req, res){
-  console.log(req);
-});
-app.get('/login', function (req, res) {
-  console.log(req);
-  console.log(res);
-});
+app.get('/users', function(req, res){
+  res.setHeader('Cache-Control', 'no-cache');
+  res.json(userNames.get_all());
+})
 server.listen(process.env.PORT || 3000);
-// Keep track of which names are used so that there are no duplicates
+
 var userNames = (function () {
-  var names = {};
-
-  // serialize claimed names as an array
-  var get = function () {
-    var res = [];
-    for (user in names) {
-      res.push(user);
-    }
-
-    return res;
+  var users = {};
+  var nextUserId = 1;
+  var contain = function(name){
+    return _.has(users, name);
+  };
+  var get_all = function () {
+    return _.values(users);
   };
 
   var free = function (name) {
@@ -50,28 +45,36 @@ var userNames = (function () {
       delete names[name];
     }
   };
-
+  var add = function(data){
+    var name = data.name;
+    data.id = nextUserId;
+    users[name] = data;
+    nextUserId++;
+  };
   return {
     free: free,
-    get: get
+    add: add,
+    get_all: get_all,
+    contain: contain
   };
 }());
 io.sockets.on('connection', function(socket){
-  // broadcast a user's message to other users
   socket.on('send:message', function (data) {
     socket.broadcast.emit('send:message', {
-      user: name,
-      text: data.text
+      user: data.user,
+      message: data.message
     });
   });
-  socket.on('login', function(data){
-    console.log(data);
-  })
-  // clean up when a user leaves, and broadcast it to other users
-  socket.on('disconnect', function () {
-    socket.broadcast.emit('user:left', {
-      name: name
-    });
-    userNames.free(name);
+  socket.on('login', function(data, callback){
+    var name = data.name;
+    if(userNames.contain(name)){
+      callback(false);
+    }else{
+      userNames.add(data);
+      callback(true);
+      socket.broadcast.emit('user:join', {
+        name: name
+      });
+    }
   });
 });

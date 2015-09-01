@@ -6,102 +6,91 @@ var dispatcher = require('./dispatcher');
 var helperUtil = require('./helperUtil');
 var actionTypes = helperUtil.ActionTypes;
 var avatars = helperUtil.Avatars;
+var avatars_small = helperUtil.Avatars_small;
 var AVATAR_SCROLL_LIMIT = 3;
 var SCROLL_GAP_WIDTH = 171;
-var UsersList = React.createClass({
+var UserList = React.createClass({
 	render: function(){
-		var renderUser = function(user){
-			return <li> { user } </li>
-		};
-		return (
-			<div class='users'>
-				<h3> Online Users </h3>
-				<ul>{ this.props.users.map(renderUser)} </ul>
+		return(
+			<div className={'users'}>
+				<div> Online Users </div>
+				<div className={'users-list'}>
+					{this.props.users.map(function(user) {
+						var style = { 'backgroundPosition': avatars_small[user.avatar].background_position }
+						return (
+							<div className={'user-profile'}>
+								<div className={'user-avatar'} style={style}></div>
+								<div className={'user-name'}> { user.name } </div>
+							</div>);
+					}.bind(this))}
+				</div>
 			</div>
-		);
+		)
 	}
-});
-
+})
 var Message = React.createClass({
 	render: function(){
 		return(
-			<div class="message">
-				<strong>{this.props.user}</strong> :
-				{this.props.text}
+			<div className={"message"}>
+				<strong>{this.props.user.name}</strong> :
+				{this.props.message}
 			</div>
 		)
 	}
 });
 
 var MessageList = React.createClass({
+	getInitialState: function(){
+		return {
+			message : ""
+		}
+	},
+	componentDidMount: function() {
+		React.findDOMNode(this.refs.textarea).focus();
+	},
+	send: function(){
+		var data = {
+			message : this.state.message,
+			user : Store.current_user()
+		}
+		this.props.handleMessageSubmit(data);
+	},
+	handleKeydown: function(){
+		if(event.keyCode === ENTER_KEY_CODE){
+			this.send();
+		}
+	},
+	handleChange: function(event){
+		this.setState({
+			message : event.target.value
+		});
+	},
 	render: function(){
+		var is_messages_empty = _.isEmpty(this.props.messages);
+		var no_message_style = is_messages_empty ? { display : 'block'} : { display : 'none'};
+		var message_style = is_messages_empty ? { display : 'none'} : { display : 'block'};
 		var renderMessage = function(message){
-			return <Message user={message.user} text={message.text} />
+			return <Message user={message.user} message={message.message} />
 		}
 		return (
-			<div class='messages'>
-				<h2> Conversation: </h2>
-				{ this.props.messages.map(renderMessage)}
-			</div>
-		);
-	}
-});
-
-var MessageForm = React.createClass({
-
-	getInitialState: function(){
-		return {text: ''};
-	},
-
-	handleSubmit : function(e){
-		e.preventDefault();
-		var message = {
-			user : this.props.user,
-			text : this.state.text
-		}
-		this.props.onMessageSubmit(message);
-		this.setState({ text: '' });
-	},
-
-	changeHandler : function(e){
-		this.setState({ text : e.target.value });
-	},
-
-	render: function(){
-		return(
-			<div class='message_form'>
-				<h3>Write New Message</h3>
-				<form onSubmit={this.handleSubmit}>
-					<input onChange={this.changeHandler} value={this.state.text} />
-				</form>
-			</div>
-		);
-	}
-});
-
-var ChangeNameForm = React.createClass({
-	getInitialState: function(){
-		return {newName: ''};
-	},
-
-	onKey : function(e){
-		this.setState({ newName : e.target.value });
-	},
-
-	handleSubmit : function(e){
-		e.preventDefault();
-		var newName = this.state.newName;
-		this.props.onChangeName(newName);
-		this.setState({ newName: '' });
-	},
-
-	render: function(){
-		return(
-			<div class='change_name_form'>
-				<h3> Change Name </h3>
-				<form onSubmit={this.handleSubmit}>
-					<input onChange={this.onKey} value={this.state.newName} />
-				</form>
+			<div className='message-board'>
+				<div> Conversation: </div>
+				<div className={'messages'}>
+					<div className="no-message" style={no_message_style}>
+						No new messages:)
+					</div>
+					<div className="has-message" style={message_style}>
+						{ this.props.messages.map(renderMessage)}
+					</div>
+				</div>
+				<div className='messages-composer'>
+					<textarea value={this.state.name} onChange={this.handleChange} onKeyDown={this.handleKeydown} ref='textarea'/>
+					<div className='send-btn'>
+						<button className='btn' type="button" onClick={this.send}>
+							<span>Send</span>
+						</button>
+					</div>
+				</div>
 			</div>
 		);
 	}
@@ -111,62 +100,34 @@ var ChatWindow = React.createClass({
 	getInitialState: function(){
 		socket.on('send:message', this.messageRecieve);
 		socket.on('user:join', this.userJoined);
-		socket.on('user:left', this.userLeft);
-		return {users: [], messages:[], text: ''};
+		return {users: [], messages:[]};
 	},
-	messageRecieve: function(message){
-		this.state.messages.push(message);
-		this.setState();
+	componentDidMount: function(){
+		$.get('/users', function(result) {
+			this.setState({users: result});
+		}.bind(this));
+	},
+	messageRecieve: function(data){
+		this.state.messages.push(data);
 	},
 	userJoined: function(data){
 		this.state.users.push(data.name);
 		this.state.messages.push({
-			user: 'APLICATION BOT',
-			text : data.name +' Joined'
-		});
-		this.setState();
-	},
-
-	userLeft: function(data){
-		var index = this.state.users.indexOf(data.name);
-		this.state.users.splice(index, 1);
-		this.state.messages.push({
-			user: 'APLICATION BOT',
-			text : data.name +' Left'
-		});
-		this.setState();
-
-	},
-
-	handleMessageSubmit : function(message){
-		this.state.messages.push(message);
-		this.setState();
-
-		socket.emit('send:message', message);
-	},
-
-	handleChangeName : function(newName){
-		var that = this;
-		var oldName = this.state.user;
-		socket.emit('change:name', { name : newName}, function(result){
-			if(!result){
-				alert('There was an error changing your name');
-			}else{
-				var index = that.state.users.indexOf(oldName);
-				that.state.users.splice(index, 1, newName);
-				that.setState();
-			}
+			user: 'APPLICATION BOT',
+			message : data.user.name +' just joined'
 		});
 	},
-
+	handleMessageSubmit : function(data){
+		this.state.messages.push(data);
+		socket.emit('send:message', data);
+	},
 	render : function(){
-		var style = this.props.isLogin ? { display: 'none'} : { display: 'inline-block'}
 		return (
-			<div id={'chat-window'} style={style}>
-				<UsersList users={this.state.users} />
-				<MessageList messages={this.state.messages} />
-				<MessageForm onMessageSubmit={this.handleMessageSubmit} user={this.state.user} />
-				<ChangeNameForm onChangeName={this.handleChangeName} />
+			<div id={'chat-window'}>
+				<UserList users={this.state.users} />
+				<div className={'message-container'}>
+					<MessageList messages={this.state.messages} handleMessageSubmit={this.handleMessageSubmit}/>
+				</div>
 			</div>
 		);
 	}
@@ -189,15 +150,24 @@ var LoginForm = React.createClass({
 		}
   	},
 	handleClick: function(){
-		this.props.isLogin = false;
 		event.preventDefault();
+		var self = this;
 		var name = this.state.name.trim();
+		var avatar = this.state.avatar;
 		if (name) {
-			//dispatcher.dispatch({
-			//	type: actionTypes.LOGIN,
-			//	username: name
-			//});
-			socket.emit('login', {name: name});
+			socket.emit('login', {name: name, avatar: avatar}, function(res){
+				if(!res){
+					alert('Your name has been used by others, please use another name.');
+					self.setState({isNextStep: false, btnDisplay: "none"});
+				}else{
+					dispatcher.dispatch({
+						type: actionTypes.LOGIN,
+						name: name,
+						avartar: avatar
+					});
+					React.render(<ChatWindow/>, $('body')[0]);
+				}
+			});
 		}
 	},
 	handleChange: function(event){
@@ -265,7 +235,7 @@ var LoginForm = React.createClass({
 							<div className={'avatar-container-inner'} ref="avatarNav">
 								{_.values(avatars).map(function(avatar) {
 									var style = {
-										'background-position': avatar.background_position
+										'backgroundPosition': avatar.background_position
 									}
 									return <div key={avatar.avatar_id} data-id = {avatar.avatar_id} className={'avatar'} onClick={this.selectAvatar} style={style}></div>;
 								}.bind(this))}
@@ -274,7 +244,7 @@ var LoginForm = React.createClass({
 						<i className={"nav fa fa-angle-right fa-lg"} onClick={this.avatarNavRight}></i>
 					</div>
 				</div>
-				<button className={'login-btn'} type="button" style={{display: this.state.btnDisplay}} onClick={this.handleClick}>
+				<button className={'btn'} type="button" style={{display: this.state.btnDisplay}} onClick={this.handleClick}>
 					<span>Start chatting!</span>
 				</button>
 			</div>
@@ -283,7 +253,7 @@ var LoginForm = React.createClass({
 });
 var ChatApp = React.createClass({
 	getInitialState: function() {
-    return {isLogin: true};
+    	return {isLogin: true};
   	},
 	componentDidMount: function() {
 		Store.addLoginListener(this._onLogin);
@@ -295,7 +265,6 @@ var ChatApp = React.createClass({
 	render : function(){
 		return (
 			<div className={'main'}>
-				<ChatWindow isLogin={this.state.isLogin}/>
 				<LoginForm isLogin={this.state.isLogin}/>
 			</div>
 		);
