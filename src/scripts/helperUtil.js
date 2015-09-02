@@ -2,7 +2,8 @@ var keyMirror = require('keymirror');
 
 module.exports = {
     ActionTypes: keyMirror({
-        LOGIN: null
+        LOGIN: null,
+        MESSAGE_SEND: null
     }),
     Avatars: {
         1 : {

@@ -42,7 +42,7 @@ var Message = React.createClass({
 			var output = (
 				<div className={"message"}>
 					<div className='user-avatar' style={style}></div>
-					<div className='user-name'> { user.name } <span className={'time'}>send at {this.props.time}</span></div>
+					<div className='user-name'> { user.name } <span className={'time'}>sent at {this.props.time}</span></div>
 					<div className='content'>
 						<i className='fa fa-play'></i>
 						{this.props.message}
@@ -65,28 +65,36 @@ var MessageList = React.createClass({
 	componentDidMount: function() {
 		React.findDOMNode(this.refs.textarea).focus();
 	},
+	componentDidUpdate: function(){
+		this._scrollToBottom();
+	},
 	send: function(){
 		var data = {
 			message : this.state.message,
-			user : Store.current_user(),
+			user : Store.getCurrentUser(),
 			time : moment(new Date()).format('lll')
 		}
 		this.props.handleMessageSubmit(data);
-		this.setState({
-			message : ""
-		});
+		this._scrollToBottom();
 	},
-	handleKeydown: function(){
+	handleKeydown: function(event){
 		if(event.keyCode === ENTER_KEY_CODE){
 			this.send();
-		}
-	},
-	handleChange: function(event){
-		if(event.keyCode !== ENTER_KEY_CODE){
 			this.setState({
-				message : event.target.value
+				message : ""
 			});
 		}
+	},
+	_scrollToBottom: function(){
+		var message_board = React.findDOMNode(this.refs.all_messages);
+		$(message_board).stop().animate({
+			scrollTop: message_board.scrollHeight
+		}, 500);
+	},
+	handleChange: function(event){
+		this.setState({
+			message : event.target.value
+		});
 	},
 	render: function(){
 		var is_messages_empty = _.isEmpty(this.props.messages);
@@ -121,7 +129,7 @@ var MessageList = React.createClass({
 
 var ChatWindow = React.createClass({
 	getInitialState: function(){
-		socket.on('send:message', this.messageRecieve);
+		socket.on('broadcast:message', this.messageReceive);
 		socket.on('user:join', this.userJoined);
 		return {users: [], messages:[]};
 	},
@@ -129,19 +137,23 @@ var ChatWindow = React.createClass({
 		$.get('/users', function(result) {
 			this.setState({users: result});
 		}.bind(this));
+		Store.addMessageListener(this._onChange);
 	},
-	messageRecieve: function(data){
-		this.state.messages.push(data);
+	componentWillUnmount: function(){
+		Store.removeMessageListener(this._onChange);
+	},
+	messageReceive: function(data){
+		Store.addMessage(data);
 	},
 	userJoined: function(data){
 		this.state.users.push(data);
-		this.state.messages.push({
+		Store.addMessage({
 			message : data.name +' just joined, say hello!',
 			type : 'automate'
 		});
 	},
 	handleMessageSubmit : function(data){
-		this.state.messages.push(data);
+		Store.addMessage(data);
 		socket.emit('send:message', data);
 	},
 	render : function(){
@@ -153,6 +165,9 @@ var ChatWindow = React.createClass({
 				</div>
 			</div>
 		);
+	},
+	_onChange: function(){
+		this.setState({messages: Store.allMessage()});
 	}
 });
 var LoginForm = React.createClass({
