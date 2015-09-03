@@ -14,7 +14,12 @@ var UserList = React.createClass({
 		return(
 			<div className={'users'}>
 				<div> Online Users </div>
+				<div className={'home'}><i/></div>
 				<div className={'users-list'}>
+					<div className={'user-profile home'}>
+						<i className={'user-avatar home'}></i>
+						<div className={'user-name'}> { 'All Users' } </div>
+					</div>
 					{this.props.users.map(function(user) {
 						var style = { 'backgroundPosition': avatars_small[user.avatar].background_position }
 						return (
@@ -69,20 +74,23 @@ var MessageList = React.createClass({
 		this._scrollToBottom();
 	},
 	send: function(){
-		var data = {
-			message : this.state.message,
-			user : Store.getCurrentUser(),
-			time : moment(new Date()).format('lll')
+		var message = this.state.message.trim();
+		if(!_.isEmpty(message)){
+			var data = {
+				message : message,
+				user : Store.getCurrentUser(),
+				time : moment(new Date()).format('lll')
+			}
+			this.props.handleMessageSubmit(data);
+			this._scrollToBottom();
+			this.setState({
+				message : ""
+			});
 		}
-		this.props.handleMessageSubmit(data);
-		this._scrollToBottom();
 	},
 	handleKeydown: function(event){
 		if(event.keyCode === ENTER_KEY_CODE){
 			this.send();
-			this.setState({
-				message : ""
-			});
 		}
 	},
 	_scrollToBottom: function(){
@@ -92,8 +100,10 @@ var MessageList = React.createClass({
 		}, 500);
 	},
 	handleChange: function(event){
+		var value = event.target.value;
+		if(value.indexOf("\n") > -1)  value = value.replace("\n","");
 		this.setState({
-			message : event.target.value
+			message : value
 		});
 	},
 	render: function(){
@@ -115,7 +125,7 @@ var MessageList = React.createClass({
 					</div>
 				</div>
 				<div className='messages-composer'>
-					<textarea value={this.state.message} onChange={this.handleChange} onKeyDown={this.handleKeydown} ref='textarea'/>
+					<textarea value={this.state.message} placeholder="what do you want to say:)" onChange={this.handleChange} onKeyDown={this.handleKeydown} ref='textarea'/>
 					<div className='send-btn'>
 						<button className='btn' type="button" onClick={this.send}>
 							<span>Send</span>
@@ -131,6 +141,7 @@ var ChatWindow = React.createClass({
 	getInitialState: function(){
 		socket.on('broadcast:message', this.messageReceive);
 		socket.on('user:join', this.userJoined);
+		socket.on('user:disconnect', this.userLogout);
 		return {users: [], messages:[]};
 	},
 	componentDidMount: function(){
@@ -144,6 +155,15 @@ var ChatWindow = React.createClass({
 	},
 	messageReceive: function(data){
 		Store.addMessage(data);
+	},
+	userLogout: function(data){
+		this.setState({
+			users: _.reject(this.state.users, function(user){ return user.id === data.id})
+		});
+		Store.addMessage({
+			message : data.name +' has left the chatting room:(',
+			type : 'automate'
+		});
 	},
 	userJoined: function(data){
 		this.state.users.push(data);

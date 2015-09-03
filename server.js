@@ -28,10 +28,14 @@ var UserNamesHelper = (function () {
     nextUserId++;
     return data;
   };
+  var remove = function(data){
+    delete users[data.name];
+  };
   return {
     add: add,
     getAll: getAll,
-    contain: contain
+    contain: contain,
+    remove: remove
   };
 }());
 var MessageHelper = (function(){
@@ -58,8 +62,14 @@ io.sockets.on('connection', function(socket){
       callback(false);
     }else{
       var new_user = UserNamesHelper.add(data);
+      socket.current_user = data;
       callback(true);
       socket.broadcast.emit('user:join', new_user);
     }
+  });
+  socket.on('disconnect', function () {
+    var user = socket.current_user;
+    UserNamesHelper.remove(user);
+    socket.broadcast.emit('user:disconnect', user);
   });
 });

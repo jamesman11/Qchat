@@ -236,6 +236,11 @@ input{
   height: 32px;
   padding: 3px 0px;
 }
+#chat-window .user-profile.home{
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 0px;
+  height: 37px;
+}
 #chat-window .message-container{
   width: 430px;
   height: 100%;
@@ -363,4 +368,10 @@ input{
   border-radius: 17px;
   position: relative;
   float: left;
+}
+
+#chat-window .user-avatar.home{
+  display: inline-block;
+  background-image: url('../content/home.jpg');
+  background-size: cover;
 }
