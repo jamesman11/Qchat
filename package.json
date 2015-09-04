@@ -18,7 +18,7 @@
         "moment": "^2.10.6"
     },
     "scripts": {
-        "start": "watchify -o src/scripts/bundle.js -v -d src/scripts/wechat.js | node server.js"
+        "start": "watchify -o src/scripts/bundle.js -v -d src/scripts/wechat.js | node-debug server.js"
     },
     "engines": {
         "node": "0.10.x",

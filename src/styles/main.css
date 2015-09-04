@@ -216,7 +216,7 @@ input{
 }
 #chat-window{
   margin: 0 auto;
-  width: 620px;
+  width: 635px;
   height: 478px;
   margin-top: 30px;
   box-sizing: border-box;
@@ -227,18 +227,25 @@ input{
 
 #chat-window .users{
   float: left;
-  width: 140px;
+  width: 155px;
   height: 430px;
 }
 
 #chat-window .user-profile{
   line-height: 30px;
   height: 32px;
-  padding: 3px 0px;
+  padding: 3px 0px 6px 4px;
+  cursor: pointer;
+}
+#chat-window .user-profile.active{
+  background-color: #E6E4E4;
+}
+#chat-window .user-profile:hover{
+  background-color: #E6E4E4;
 }
 #chat-window .user-profile.home{
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  padding: 0px;
+  padding-bottom: 0px;
   height: 37px;
 }
 #chat-window .message-container{
@@ -346,7 +353,6 @@ input{
   height: 415px;
   overflow: auto;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  padding: 5px;
   border-radius: 2px;
 }
 #chat-window .user-profile .user-name{
@@ -358,8 +364,14 @@ input{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  width: 90px;
+  width: 92px;
   position: absolute;
+}
+#chat-window .user-profile .fa-commenting-o{
+  position: relative;
+  left: 96px;
+  font-size: 13px;
+  color: #4FB5EA;
 }
 #chat-window .user-avatar{
   background-image: url('../content/avatars_small.jpg');

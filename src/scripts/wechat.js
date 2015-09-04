@@ -1,6 +1,5 @@
 var socket = io.connect();
 var ENTER_KEY_CODE = 13;
-var actions = require('./actions');
 var Store = require('./store');
 var dispatcher = require('./dispatcher');
 var helperUtil = require('./helperUtil');
@@ -10,22 +9,49 @@ var avatars_small = helperUtil.Avatars_small;
 var AVATAR_SCROLL_LIMIT = 3;
 var SCROLL_GAP_WIDTH = 171;
 var UserList = React.createClass({
+	handleClick: function(event){
+		var id = $(event.currentTarget).attr('data-id');
+		this.props.notification[id] = false;
+		_.each($(this.refs.userList.getDOMNode()).children(), function(child){
+			var type = child.getAttribute('data-type');
+			var is_click = child.getAttribute('data-id') === id;
+			if(type === "home"){
+				child.className = is_click ? "user-profile home active" : "user-profile home";
+			}else if(type === "user"){
+				child.className = is_click ? "user-profile active" : "user-profile";
+			}
+		});
+		// I just use simple senderID_receiverID here as the key for the messages
+		var threadId = id === "0" ? id : [id, Store.getCurrentUser().id].sort().join('_');
+		dispatcher.dispatch({
+			threadId: threadId,
+			actionTypes : actionTypes.SWITCH_THREAD
+		});
+	},
+	getName: function(user){
+		return user.id === Store.getCurrentUser().id ? "Current User" : user.name;
+	},
+	getNotificationStyle: function(key){
+		return this.props.notification[key] ? "inline-block" : "none";
+	},
 	render: function(){
 		return(
 			<div className={'users'}>
 				<div> Online Users </div>
 				<div className={'home'}><i/></div>
-				<div className={'users-list'}>
-					<div className={'user-profile home'}>
+				<div className={'users-list'} ref={'userList'}>
+					<div className={'user-profile home active'} data-id={'0'} data-type={'home'} onClick={this.handleClick}>
 						<i className={'user-avatar home'}></i>
 						<div className={'user-name'}> { 'All Users' } </div>
+						<i className={"fa fa-commenting-o"} style={{display: this.getNotificationStyle('0')}} ></i>
 					</div>
 					{this.props.users.map(function(user) {
-						var style = { 'backgroundPosition': avatars_small[user.avatar].background_position }
+						var style = { 'backgroundPosition': avatars_small[user.avatar].background_position };
 						return (
-							<div className={'user-profile'}>
+							<div className={'user-profile'} data-type={'user'} data-id={user.id} onClick={this.handleClick}>
 								<div className={'user-avatar'} style={style}></div>
-								<div className={'user-name'}> { user.name } </div>
+								<div className={'user-name'}> { this.getName(user) } </div>
+								<i className={"fa fa-commenting-o"} style={{display: this.getNotificationStyle(user.id)}}></i>
 							</div>);
 					}.bind(this))}
 				</div>
@@ -79,7 +105,8 @@ var MessageList = React.createClass({
 			var data = {
 				message : message,
 				user : Store.getCurrentUser(),
-				time : moment(new Date()).format('lll')
+				time : moment(new Date()).format('lll'),
+				threadId: Store.getThreadId()
 			}
 			this.props.handleMessageSubmit(data);
 			this._scrollToBottom();
@@ -142,52 +169,83 @@ var ChatWindow = React.createClass({
 		socket.on('broadcast:message', this.messageReceive);
 		socket.on('user:join', this.userJoined);
 		socket.on('user:disconnect', this.userLogout);
-		return {users: [], messages:[]};
+		return {users: [], messages:[], notification: {"0": false}};
 	},
 	componentDidMount: function(){
 		$.get('/users', function(result) {
-			this.setState({users: result});
+			var notification = {};
+			var ids = _.map(result, function(res){ return res.id});
+			_.each(ids, function(id){notification[id] = false});
+			this.setState({users: result, notification: notification});
 		}.bind(this));
-		Store.addMessageListener(this._onChange);
+		Store.addMessageListener(this._updateMessageView);
+		Store.addThreadListener(this._updateMessageView);
+		Store.addMessageBroadcastListener(this._onMessageChange);
 	},
 	componentWillUnmount: function(){
-		Store.removeMessageListener(this._onChange);
+		Store.removeMessageListener(this._updateMessageView);
+		Store.removeThreadListener(this._updateMessageView);
+		Store.removeMessageBroadcastListener(this._onMessageChange);
 	},
 	messageReceive: function(data){
-		Store.addMessage(data);
+		data.actionTypes = actionTypes.MESSAGE_BROADCAST;
+		dispatcher.dispatch(data);
 	},
 	userLogout: function(data){
-		this.setState({
-			users: _.reject(this.state.users, function(user){ return user.id === data.id})
-		});
-		Store.addMessage({
-			message : data.name +' has left the chatting room:(',
-			type : 'automate'
-		});
+		if(data){
+			this.setState({
+				users: _.reject(this.state.users, function(user){ return user.id === data.id})
+			});
+			Store.removeMessages(data.id);
+			dispatcher.dispatch({
+				message : data.name +' has left the chatting room:(',
+				type : 'automate',
+				actionTypes : actionTypes.MESSAGE_SEND
+			});
+		}
 	},
 	userJoined: function(data){
 		this.state.users.push(data);
-		Store.addMessage({
+		this.state.notification[data.id] = false;
+		dispatcher.dispatch({
 			message : data.name +' just joined, say hello!',
-			type : 'automate'
+			type : 'automate',
+			actionTypes : actionTypes.MESSAGE_SEND
 		});
 	},
 	handleMessageSubmit : function(data){
-		Store.addMessage(data);
+		data.actionTypes = actionTypes.MESSAGE_SEND
+		dispatcher.dispatch(data);
 		socket.emit('send:message', data);
 	},
 	render : function(){
 		return (
 			<div id={'chat-window'}>
-				<UserList users={this.state.users} />
+				<UserList users={this.state.users} notification={this.state.notification}/>
 				<div className={'message-container'}>
 					<MessageList messages={this.state.messages} handleMessageSubmit={this.handleMessageSubmit}/>
 				</div>
 			</div>
 		);
 	},
-	_onChange: function(){
+	_updateMessageView: function(){
 		this.setState({messages: Store.allMessage()});
+	},
+	// show a notification when receiving messages;
+	_onMessageChange: function(data){
+		var threadId = data.threadId;
+		if(threadId !== Store.getThreadId()){
+			var id = null;
+			if(threadId === "0"){
+				id = threadId;
+			}else{
+				var current_user_id = Store.getCurrentUser().id;
+				var without_current_user = _.without(threadId.split("_"), current_user_id.toString());
+				id = without_current_user[0];
+			}
+			this.state.notification[id] = true;
+		}
+		this._updateMessageView();
 	}
 });
 var LoginForm = React.createClass({
@@ -213,17 +271,24 @@ var LoginForm = React.createClass({
 		var name = this.state.name.trim();
 		var avatar = this.state.avatar;
 		if (name) {
-			socket.emit('login', {name: name, avatar: avatar}, function(res){
+			var data = {name: name, avatar: avatar};
+			socket.emit('login', data, function(res){
 				if(!res){
 					alert('Your name has been used by others, please use another name.');
 					self.setState({isNextStep: false, btnDisplay: "none"});
 				}else{
-					dispatcher.dispatch({
-						type: actionTypes.LOGIN,
-						name: name,
-						avatar: avatar
-					});
-					React.render(<ChatWindow/>, $('body')[0]);
+					$.ajax({
+						type : "post",
+						url: "/login",
+						dataType: 'json',
+						contentType: "application/json",
+						data : JSON.stringify(data),
+						success: function(user){
+							user.actionTypes = actionTypes.LOGIN;
+							dispatcher.dispatch(user);
+							React.render(<ChatWindow/>, $('body')[0]);
+						}
+					})
 				}
 			});
 		}
@@ -324,6 +389,12 @@ var ChatApp = React.createClass({
 		return (
 			<div className={'main'}>
 				<LoginForm isLogin={this.state.isLogin}/>
+				<div className="contact">
+					<i className="fa fa-copyright"> </i>
+					<span>
+						Made by <a href="https://github.com/jamesman11">James Man</a>
+					</span>
+				</div>
 			</div>
 		);
 	},

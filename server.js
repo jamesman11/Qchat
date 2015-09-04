@@ -5,10 +5,14 @@ var express = require('express'),
     fs = require('fs'),
     users = [],
     _ = require('underscore')._;
+app.use(express.bodyParser());
 app.use('/', express.static(__dirname + '/src'));
 app.get('/users', function(req, res){
   res.setHeader('Cache-Control', 'no-cache');
   res.json(UserNamesHelper.getAll());
+});
+app.post('/login', function(req, res){
+  res.json(UserNamesHelper.find(req.body.name));
 })
 server.listen(process.env.PORT || 3000);
 
@@ -21,6 +25,9 @@ var UserNamesHelper = (function () {
   var getAll = function () {
     return _.values(users);
   };
+  var find = function(name){
+    return users[name];
+  }
   var add = function(data){
     var name = data.name;
     data.id = nextUserId;
@@ -33,22 +40,24 @@ var UserNamesHelper = (function () {
   };
   return {
     add: add,
+    find: find,
     getAll: getAll,
     contain: contain,
     remove: remove
   };
 }());
 var MessageHelper = (function(){
-  var messages = [];
+  var user_messages = {};
   var add = function(data){
-    messages.push(data);
+    if(!user_messages[data.threadId]) user_messages[data.threadId];
+    user_messages[data.threadId].push(data);
   };
-  var getAll = function(){
-    return messages;
+  var getUserMessages = function(threadId){
+    return user_messages[threadId];
   };
   return {
     add: add,
-    getAll: getAll
+    getUserMessages: getUserMessages
   }
 }());
 io.sockets.on('connection', function(socket){
@@ -67,9 +76,10 @@ io.sockets.on('connection', function(socket){
       socket.broadcast.emit('user:join', new_user);
     }
   });
+  // remove user and all related messages
   socket.on('disconnect', function () {
     var user = socket.current_user;
-    UserNamesHelper.remove(user);
+    if(user) UserNamesHelper.remove(user);
     socket.broadcast.emit('user:disconnect', user);
   });
 });
