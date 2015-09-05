@@ -49,7 +49,7 @@ var UserNamesHelper = (function () {
 var MessageHelper = (function(){
   var user_messages = {};
   var add = function(data){
-    if(!user_messages[data.threadId]) user_messages[data.threadId];
+    if(!user_messages[data.threadId]) user_messages[data.threadId] = [];
     user_messages[data.threadId].push(data);
   };
   var getUserMessages = function(threadId){

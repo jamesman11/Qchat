@@ -225,6 +225,7 @@ var ChatWindow = React.createClass({
 				<div className={'message-container'}>
 					<MessageList messages={this.state.messages} handleMessageSubmit={this.handleMessageSubmit}/>
 				</div>
+				<Contact/>
 			</div>
 		);
 	},
@@ -234,13 +235,14 @@ var ChatWindow = React.createClass({
 	// show a notification when receiving messages;
 	_onMessageChange: function(data){
 		var threadId = data.threadId;
-		if(threadId !== Store.getThreadId()){
+		var splits = threadId.split("_");
+		var current_user_id = Store.getCurrentUser().id.toString();
+		if(threadId !== Store.getThreadId() && _.contains(splits, current_user_id)){
 			var id = null;
 			if(threadId === "0"){
 				id = threadId;
 			}else{
-				var current_user_id = Store.getCurrentUser().id;
-				var without_current_user = _.without(threadId.split("_"), current_user_id.toString());
+				var without_current_user = _.without(splits, current_user_id);
 				id = without_current_user[0];
 			}
 			this.state.notification[id] = true;
@@ -374,6 +376,18 @@ var LoginForm = React.createClass({
 			);
   	}
 });
+var Contact = React.createClass({
+	render: function(){
+		return (
+			<div className="contact">
+				<i className="fa fa-copyright"> </i>
+				<span>
+					Made by <a href="https://github.com/jamesman11">James Man</a>
+				</span>
+			</div>
+		)
+	}
+})
 var ChatApp = React.createClass({
 	getInitialState: function() {
     	return {isLogin: true};
@@ -389,12 +403,7 @@ var ChatApp = React.createClass({
 		return (
 			<div className={'main'}>
 				<LoginForm isLogin={this.state.isLogin}/>
-				<div className="contact">
-					<i className="fa fa-copyright"> </i>
-					<span>
-						Made by <a href="https://github.com/jamesman11">James Man</a>
-					</span>
-				</div>
+				<Contact/>
 			</div>
 		);
 	},
