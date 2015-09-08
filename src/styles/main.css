@@ -234,7 +234,7 @@ input{
 #chat-window .user-profile{
   line-height: 30px;
   height: 32px;
-  padding: 3px 0px 6px 4px;
+  padding: 3px 3px 6px 4px;
   cursor: pointer;
 }
 #chat-window .user-profile.active{
