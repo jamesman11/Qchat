@@ -198,7 +198,7 @@ input{
   transform: scale(1.2,1.2); /* Standard syntax */
 }
 .avatarForm .fa-angle-left{
-  margin-right: 5px;
+  margin-right: 9px;
 }
 .avatarForm .fa-angle-right{
   margin-left: 5px;
@@ -349,8 +349,22 @@ input{
   float: right;
   margin: 0;
 }
+#chat-window .enhance-btns{
+  float: left;
+  position: relative;
+}
+#chat-window .enhance-btns i{
+  color: #4FB5EA;
+  cursor: pointer;
+}
+#chat-window .enhance-btns i:hover{
+  color: #a8d7ea;
+}
+#chat-window .enhance-btns .fa-smile-o{
+  margin-right: 5px;
+}
 #chat-window .users-list{
-  height: 415px;
+  height: 425px;
   overflow: auto;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 2px;
@@ -393,4 +407,36 @@ input{
   bottom: 0px;
   left: 50%;
   margin-left: -100px;
+}
+
+#chat-window .emoji{
+  position: absolute;
+  width: 320px;
+  left: -3px;
+  line-height: 10px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.24);
+}
+
+#chat-window .emoji img{
+  cursor: pointer;
+  background-color: #fbfafa;
+  width: 20px;
+  height: 20px;
+}
+
+#chat-window .emoji img:hover{
+  background-color: #e9e8e8;
+  opacity: 0.8;
+}
+
+#chat-window .content .emoji-icon{
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  position: relative;
+}
+
+#chat-window .content .inline-message{
+  display: flex;
 }

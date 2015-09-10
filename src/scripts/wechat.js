@@ -61,6 +61,18 @@ var UserList = React.createClass({
 })
 var Message = React.createClass({
 	render: function(){
+		// convert [:1] like string to emoji
+		var convertMessage = function(message){
+			var regex = /\[\:(.*?)\]/;
+			var message = message;
+			while(message.match(regex)){
+				var emoji_id = message.match(regex)[1];
+				var src = "..\/content\/emoji\/" + emoji_id + ".png";
+				var emoji = "<img class=\'emoji-icon\' src=\"" + src + "\">";
+				message = message.replace(regex, emoji);
+			}
+			return {__html: message};
+		};
 		if(this.props.type === "automate"){
 			var output = (
 				<div className={"message automate"}>
@@ -76,7 +88,7 @@ var Message = React.createClass({
 					<div className='user-name'> { user.name } <span className={'time'}>sent at {this.props.time}</span></div>
 					<div className='content'>
 						<i className='fa fa-play'></i>
-						{this.props.message}
+						<div className='inline-message' dangerouslySetInnerHTML={convertMessage(this.props.message)} />
 					</div>
 				</div>
 			)
@@ -86,11 +98,25 @@ var Message = React.createClass({
 
 	}
 });
-
+var EmojiView = React.createClass({
+	render: function(){
+		var style = this.props.isEmojiShow ? { display : "block"} : { display : "none"};
+		return (
+			<div className='emoji' style={style}>
+				{
+					_.range(2,34).map(function(row){
+						return <img src={'../content/emoji/' + row + '.png'} data-id={row} onClick={this.props.handleEmojiClick}/>
+					}.bind(this))
+					}
+			</div>
+		);
+	}
+});
 var MessageList = React.createClass({
 	getInitialState: function(){
 		return {
-			message : ""
+			message : "",
+			isEmojiShow: false
 		}
 	},
 	componentDidMount: function() {
@@ -133,6 +159,18 @@ var MessageList = React.createClass({
 			message : value
 		});
 	},
+	handleEmojiClick: function(event){
+		var emojiId = event.currentTarget.getAttribute('data-id');
+		this.setState({
+			message: this.state.message + "[:" + emojiId + "]",
+			isEmojiShow: false
+		});
+		React.findDOMNode(this.refs.textarea).focus();
+	},
+	showHideEmoji: function(){
+		var isShown = !this.state.isEmojiShow;
+		this.setState({ isEmojiShow : isShown });
+	},
 	render: function(){
 		var is_messages_empty = _.isEmpty(this.props.messages);
 		var no_message_style = is_messages_empty ? { display : 'block'} : { display : 'none'};
@@ -153,7 +191,12 @@ var MessageList = React.createClass({
 				</div>
 				<div className='messages-composer'>
 					<textarea value={this.state.message} placeholder="what do you want to say:)" onChange={this.handleChange} onKeyDown={this.handleKeydown} ref='textarea'/>
-					<div className='send-btn'>
+					<div className='btns'>
+						<div className='enhance-btns'>
+							<i className="fa fa-smile-o" onClick={this.showHideEmoji}></i>
+							<EmojiView isEmojiShow={this.state.isEmojiShow} handleEmojiClick={this.handleEmojiClick}/>
+							<i className="fa fa-picture-o" onClick=""></i>
+						</div>
 						<button className='btn' type="button" onClick={this.send}>
 							<span>Send</span>
 						</button>
@@ -232,12 +275,12 @@ var ChatWindow = React.createClass({
 	_updateMessageView: function(){
 		this.setState({messages: Store.allMessage()});
 	},
-	// show a notification when receiving messages;
+	// show a notification when receiving messages if current thread is not the target thread
 	_onMessageChange: function(data){
 		var threadId = data.threadId;
 		var splits = threadId.split("_");
 		var current_user_id = Store.getCurrentUser().id.toString();
-		if(threadId !== Store.getThreadId() && _.contains(splits, current_user_id)){
+		if(threadId !== Store.getThreadId() && (_.contains(splits, current_user_id) || threadId === '0')){
 			var id = null;
 			if(threadId === "0"){
 				id = threadId;
