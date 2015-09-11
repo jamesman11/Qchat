@@ -86,14 +86,25 @@ var Message = React.createClass({
 				<div className={"message"}>
 					<div className='user-avatar' style={style}></div>
 					<div className='user-name'> { user.name } <span className={'time'}>sent at {this.props.time}</span></div>
-					<div className='content'>
-						<i className='fa fa-play'></i>
-						<div className='inline-message' dangerouslySetInnerHTML={convertMessage(this.props.message)} />
-					</div>
+					{(() => {
+						if(this.props.type === 'image'){
+							return (
+								<div className='content'>
+									<img className="sent-image" src={this.props.image}/>
+								</div>
+							)
+						}else{
+							return (
+								<div className='content'>
+									<i className='fa fa-play'></i>
+									<div className='inline-message' dangerouslySetInnerHTML={convertMessage(this.props.message)} />
+								</div>
+							)
+						}
+					})()}
 				</div>
 			)
 		}
-
 		return output;
 
 	}
@@ -116,7 +127,8 @@ var MessageList = React.createClass({
 	getInitialState: function(){
 		return {
 			message : "",
-			isEmojiShow: false
+			isEmojiShow: false,
+			image : ""
 		}
 	},
 	componentDidMount: function() {
@@ -125,25 +137,35 @@ var MessageList = React.createClass({
 	componentDidUpdate: function(){
 		this._scrollToBottom();
 	},
-	send: function(){
-		var message = this.state.message.trim();
-		if(!_.isEmpty(message)){
-			var data = {
-				message : message,
-				user : Store.getCurrentUser(),
-				time : moment(new Date()).format('lll'),
-				threadId: Store.getThreadId()
+	send: function(type){
+		var data = {
+			user : Store.getCurrentUser(),
+			time : moment(new Date()).format('lll'),
+			threadId: Store.getThreadId()
+		};
+		if(type === 'image'){
+			var image = this.state.image;
+			if(!_.isEmpty(image)){
+				data.image = image;
+				data.type = "image";
+				this.setState({ image : "" });
 			}
+		}else if(type === 'text'){
+			var message = this.state.message.trim();
+			if(!_.isEmpty(message)){
+				data.message = message;
+				data.type = "text";
+				this.setState({ message : "" });
+			}
+		}
+		if(data.image || data.message){
 			this.props.handleMessageSubmit(data);
 			this._scrollToBottom();
-			this.setState({
-				message : ""
-			});
 		}
 	},
 	handleKeydown: function(event){
 		if(event.keyCode === ENTER_KEY_CODE){
-			this.send();
+			this.send('text');
 		}
 	},
 	_scrollToBottom: function(){
@@ -171,12 +193,29 @@ var MessageList = React.createClass({
 		var isShown = !this.state.isEmojiShow;
 		this.setState({ isEmojiShow : isShown });
 	},
+	handleSubmit: function(e) {
+		e.preventDefault();
+	},
+	handleFile: function(e) {
+		var self = this;
+		var reader = new FileReader();
+		var file = e.target.files[0];
+
+		reader.onload = function(upload) {
+			self.setState({
+				image: upload.target.result
+			});
+			self.send('image');
+		}
+
+		if(file) reader.readAsDataURL(file) ;
+	},
 	render: function(){
 		var is_messages_empty = _.isEmpty(this.props.messages);
 		var no_message_style = is_messages_empty ? { display : 'block'} : { display : 'none'};
 		var message_style = is_messages_empty ? { display : 'none'} : { display : 'block'};
-		var renderMessage = function(message){
-			return <Message user={message.user} message={message.message} time={message.time} type={message.type}/>
+		var renderMessage = function(data){
+			return <Message user={data.user} message={data.message} image={data.image} time={data.time} type={data.type}/>
 		}
 		return (
 			<div className='message-board'>
@@ -195,7 +234,11 @@ var MessageList = React.createClass({
 						<div className='enhance-btns'>
 							<i className="fa fa-smile-o" onClick={this.showHideEmoji}></i>
 							<EmojiView isEmojiShow={this.state.isEmojiShow} handleEmojiClick={this.handleEmojiClick}/>
-							<i className="fa fa-picture-o" onClick=""></i>
+							<i className="fa fa-picture-o">
+								<form className="imageUploader" onSubmit={this.handleSubmit} encType="multipart/form-data">
+									<input type="file" onChange={this.handleFile} />
+								</form>
+							</i>
 						</div>
 						<button className='btn' type="button" onClick={this.send}>
 							<span>Send</span>
@@ -236,10 +279,17 @@ var ChatWindow = React.createClass({
 	},
 	userLogout: function(data){
 		if(data){
+			var logout_user_id = data.id;
 			this.setState({
-				users: _.reject(this.state.users, function(user){ return user.id === data.id})
+				users: _.reject(this.state.users, function(user){ return user.id === logout_user_id})
 			});
-			Store.removeMessages(data.id);
+			Store.removeMessages(logout_user_id);
+			if(Store.getThreadId().indexOf(logout_user_id) > -1){
+				dispatcher.dispatch({
+					threadId: "0",
+					actionTypes : actionTypes.SWITCH_THREAD
+				});
+			}
 			dispatcher.dispatch({
 				message : data.name +' has left the chatting room:(',
 				type : 'automate',
@@ -257,7 +307,7 @@ var ChatWindow = React.createClass({
 		});
 	},
 	handleMessageSubmit : function(data){
-		data.actionTypes = actionTypes.MESSAGE_SEND
+		data.actionTypes = actionTypes.MESSAGE_SEND;
 		dispatcher.dispatch(data);
 		socket.emit('send:message', data);
 	},

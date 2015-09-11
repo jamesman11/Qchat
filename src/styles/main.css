@@ -353,6 +353,14 @@ input{
   float: left;
   position: relative;
 }
+#chat-window .enhance-btns .imageUploader{
+  position: absolute;
+  width: 17px;
+  height: 15px;
+  opacity: 0;
+  bottom: 4px;
+  cursor: pointer;
+}
 #chat-window .enhance-btns i{
   color: #4FB5EA;
   cursor: pointer;
@@ -437,6 +445,10 @@ input{
   position: relative;
 }
 
+#chat-window .content .sent-image{
+  max-width: 340px;
+  margin-left: 5px;
+}
 #chat-window .content .inline-message{
   display: flex;
 }
