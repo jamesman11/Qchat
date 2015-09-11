@@ -2,8 +2,8 @@
 
 A chatroom built with Reactjs, socket.io, flux, nodejs and express. Inspired by [hichat](https://github.com/wayou/HiChat) and [Facebook-flux-chat](https://facebook.github.io/flux/docs/chat.html),  checkout my demo here: [DEMO](https://react-chatroom.herokuapp.com/)
 
-{<img src="https://cloud.githubusercontent.com/assets/6962853/9806473/9de63914-57f9-11e5-901c-e9e0229b0439.png">}[https://cloud.githubusercontent.com/assets/6962853/9806473/9de63914-57f9-11e5-901c-e9e0229b0439.png]
-{<img src="https://cloud.githubusercontent.com/assets/6962853/9806458/53ccc1ae-57f9-11e5-8dcd-426a6674db84.png">}[https://cloud.githubusercontent.com/assets/6962853/9806458/53ccc1ae-57f9-11e5-8dcd-426a6674db84.png]
+<img src="https://cloud.githubusercontent.com/assets/6962853/9806473/9de63914-57f9-11e5-901c-e9e0229b0439.png">
+<img src="https://cloud.githubusercontent.com/assets/6962853/9806458/53ccc1ae-57f9-11e5-8dcd-426a6674db84.png">
 
 
 ### Development Stack
