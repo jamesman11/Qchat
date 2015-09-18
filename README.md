@@ -1,4 +1,4 @@
-# Wechat
+# Qchat
 
 A chatroom built with Reactjs, socket.io, flux, nodejs and express. Inspired by [hichat](https://github.com/wayou/HiChat) and [Facebook-flux-chat](https://facebook.github.io/flux/docs/chat.html),  checkout my demo here: [DEMO](https://react-chatroom.herokuapp.com/)
 
